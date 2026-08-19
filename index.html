@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Simulador del modelo de áreas para factorizar</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: Arial, Helvetica, sans-serif;
+    background: #f4f6f8;
+    color: #1f2937;
+  }
+  header {
+    background: #17324d;
+    color: white;
+    text-align: center;
+    padding: 28px 16px;
+  }
+  header h1 { margin: 0 0 8px; font-size: clamp(24px, 4vw, 38px); }
+  header p { margin: 0; opacity: .9; }
+  main { max-width: 1100px; margin: 28px auto; padding: 0 16px 40px; }
+  .card {
+    background: white;
+    border-radius: 16px;
+    padding: 22px;
+    margin-bottom: 22px;
+    box-shadow: 0 5px 20px rgba(0,0,0,.08);
+  }
+  .controls {
+    display: flex;
+    gap: 16px;
+    align-items: end;
+    flex-wrap: wrap;
+  }
+  .field { display: flex; flex-direction: column; gap: 7px; }
+  label { font-weight: bold; }
+  input {
+    width: 150px;
+    padding: 11px;
+    font-size: 18px;
+    border: 2px solid #cbd5e1;
+    border-radius: 10px;
+  }
+  button {
+    padding: 12px 22px;
+    border: 0;
+    border-radius: 10px;
+    background: #17324d;
+    color: white;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+  }
+  button:hover { opacity: .9; }
+  .examples { margin-top: 16px; display: flex; gap: 8px; flex-wrap: wrap; }
+  .examples button { background: #e8eef3; color: #17324d; padding: 9px 14px; }
+  .hidden { display: none; }
+  .result {
+    text-align: center;
+    padding: 16px;
+    border-radius: 12px;
+    font-size: 20px;
+    font-weight: bold;
+  }
+  .success { background: #e9f7ee; color: #176b3a; border: 1px solid #a8d8b8; }
+  .error { background: #fff0f0; color: #a22b2b; border: 1px solid #f0b7b7; }
+  .counts {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(150px, 1fr));
+    gap: 14px;
+    margin: 20px 0;
+  }
+  .count {
+    border-radius: 12px;
+    padding: 18px;
+    text-align: center;
+    font-size: 18px;
+    font-weight: bold;
+    border: 1px solid #dbe2ea;
+  }
+  .blue { background: #e7f1ff; }
+  .green { background: #edf8e9; }
+  .yellow { background: #fff9dc; }
+
+  .equations {
+    text-align: center;
+    font-size: 22px;
+    line-height: 1.8;
+    margin: 18px 0;
+  }
+  .model-wrap {
+    overflow-x: auto;
+    padding: 50px 45px 35px;
+    background: #fafafa;
+    border: 1px solid #e5e7eb;
+    border-radius: 14px;
+  }
+  .model {
+    position: relative;
+    margin: 0 auto;
+    display: grid;
+    gap: 0;
+    border: 3px solid #1f2937;
+    min-width: 280px;
+  }
+  .tile {
+    border: 1.5px solid #1f2937;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: clamp(16px, 3vw, 30px);
+    min-width: 0;
+    min-height: 0;
+  }
+  .a2 { background: #9ec5fe; }
+  .aTile { background: #b9e7a4; }
+  .one { background: #ffe681; }
+
+  .dimension-top, .dimension-left {
+    position: absolute;
+    font-weight: bold;
+    color: #17324d;
+    font-size: 18px;
+    white-space: nowrap;
+  }
+  .dimension-top {
+    top: -38px;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+  .dimension-left {
+    left: -95px;
+    top: 50%;
+    transform: translateY(-50%) rotate(-90deg);
+  }
+  .explanation {
+    background: #f8fafc;
+    border-left: 5px solid #17324d;
+    padding: 16px;
+    line-height: 1.6;
+  }
+  .footer-note {
+    text-align: center;
+    color: #64748b;
+    margin-top: 12px;
+    font-size: 14px;
+  }
+  @media (max-width: 650px) {
+    .counts { grid-template-columns: 1fr; }
+    .controls { align-items: stretch; }
+    input, button { width: 100%; }
+    .model-wrap { padding-left: 25px; padding-right: 25px; }
+    .dimension-left { display: none; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>Modelo de áreas para factorizar</h1>
+  <p>Explora polinomios de la forma a² + pa + q</p>
+</header>
+
+<main>
+  <section class="card">
+    <h2>1. Ingresa los coeficientes</h2>
+    <div class="controls">
+      <div class="field">
+        <label for="p">Coeficiente p</label>
+        <input id="p" type="number" min="1" step="1" value="3">
+      </div>
+      <div class="field">
+        <label for="q">Coeficiente q</label>
+        <input id="q" type="number" min="1" step="1" value="2">
+      </div>
+      <button onclick="simular()">Construir y factorizar</button>
+    </div>
+    <div class="examples">
+      <strong>Ejemplos:</strong>
+      <button onclick="ejemplo(3,2)">a² + 3a + 2</button>
+      <button onclick="ejemplo(5,6)">a² + 5a + 6</button>
+      <button onclick="ejemplo(7,12)">a² + 7a + 12</button>
+      <button onclick="ejemplo(3,3)">a² + 3a + 3</button>
+      <button onclick="ejemplo(5,5)">a² + 5a + 5</button>
+    </div>
+  </section>
+
+  <section id="output" class="hidden">
+    <section class="card">
+      <div id="message" class="result"></div>
+      <div class="equations">
+        <div id="polynomial"></div>
+        <div id="factorization"></div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>2. Fichas necesarias</h2>
+      <div class="counts">
+        <div class="count blue" id="countA2"></div>
+        <div class="count green" id="countA"></div>
+        <div class="count yellow" id="count1"></div>
+      </div>
+    </section>
+
+    <section id="modelCard" class="card hidden">
+      <h2>3. Rectángulo formado</h2>
+      <p>Las dimensiones del rectángulo corresponden a los dos binomios de la factorización.</p>
+      <div class="model-wrap">
+        <div id="model" class="model">
+          <div id="dimTop" class="dimension-top"></div>
+          <div id="dimLeft" class="dimension-left"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>4. Observación</h2>
+      <div id="explanation" class="explanation"></div>
+    </section>
+  </section>
+
+  <p class="footer-note">Simulación del modelo de áreas para polinomios a² + pa + q, con p y q enteros positivos.</p>
+</main>
+
+<script>
+function encontrarFactores(p, q) {
+  for (let m = 1; m <= Math.sqrt(q); m++) {
+    if (q % m === 0) {
+      const n = q / m;
+      if (m + n === p) return [m, n];
+    }
+  }
+  return null;
+}
+
+function ejemplo(p, q) {
+  document.getElementById("p").value = p;
+  document.getElementById("q").value = q;
+  simular();
+}
+
+function simular() {
+  const p = Number(document.getElementById("p").value);
+  const q = Number(document.getElementById("q").value);
+  const output = document.getElementById("output");
+  const message = document.getElementById("message");
+  const polynomial = document.getElementById("polynomial");
+  const factorization = document.getElementById("factorization");
+  const explanation = document.getElementById("explanation");
+  const modelCard = document.getElementById("modelCard");
+
+  if (!Number.isInteger(p) || !Number.isInteger(q) || p <= 0 || q <= 0) {
+    output.classList.remove("hidden");
+    modelCard.classList.add("hidden");
+    message.className = "result error";
+    message.textContent = "Ingresa valores enteros positivos para p y q.";
+    polynomial.textContent = "";
+    factorization.textContent = "";
+    document.getElementById("countA2").textContent = "";
+    document.getElementById("countA").textContent = "";
+    document.getElementById("count1").textContent = "";
+    explanation.textContent = "La simulación trabaja con polinomios de la forma a² + pa + q, donde p y q son enteros positivos.";
+    return;
+  }
+
+  output.classList.remove("hidden");
+  polynomial.innerHTML = `<strong>Polinomio:</strong> a² + ${p}a + ${q}`;
+  document.getElementById("countA2").innerHTML = `1 ficha<br><span>a²</span>`;
+  document.getElementById("countA").innerHTML = `${p} ficha${p === 1 ? "" : "s"}<br><span>a</span>`;
+  document.getElementById("count1").innerHTML = `${q} ficha${q === 1 ? "" : "s"}<br><span>1</span>`;
+
+  const factors = encontrarFactores(p, q);
+
+  if (!factors) {
+    modelCard.classList.add("hidden");
+    message.className = "result error";
+    message.textContent = "No es posible formar un rectángulo con dimensiones correspondientes a binomios con términos enteros positivos.";
+    factorization.innerHTML = `<strong>Factorización:</strong> no existe una factorización de la forma (a + m)(a + n) con m y n enteros positivos.`;
+    explanation.innerHTML = `Para formar un rectángulo se necesitan dos enteros positivos <strong>m</strong> y <strong>n</strong> que cumplan simultáneamente <strong>m + n = ${p}</strong> y <strong>m × n = ${q}</strong>. En este caso no existe esa pareja, por lo que las fichas no pueden organizarse en el rectángulo solicitado.`;
+    return;
+  }
+
+  const [m, n] = factors;
+  const cols = 1 + m;
+  const rows = 1 + n;
+
+  message.className = "result success";
+  message.textContent = "Sí es posible organizar las fichas en un rectángulo.";
+  factorization.innerHTML = `<strong>Factorización:</strong> a² + ${p}a + ${q} = (a + ${m})(a + ${n})`;
+  explanation.innerHTML = `Los números <strong>${m}</strong> y <strong>${n}</strong> suman <strong>${p}</strong> y multiplicados dan <strong>${q}</strong>. Por eso las fichas pueden organizarse formando un rectángulo de base <strong>a + ${m}</strong> y altura <strong>a + ${n}</strong>. El área expresada como suma es <strong>a² + ${p}a + ${q}</strong> y expresada como producto es <strong>(a + ${m})(a + ${n})</strong>.`;
+
+  construirModelo(m, n);
+  modelCard.classList.remove("hidden");
+}
+
+function construirModelo(m, n) {
+  const model = document.getElementById("model");
+  model.innerHTML = '<div id="dimTop" class="dimension-top"></div><div id="dimLeft" class="dimension-left"></div>';
+  document.getElementById("dimTop").textContent = `Base = a + ${m}`;
+  document.getElementById("dimLeft").textContent = `Altura = a + ${n}`;
+
+  // Cada celda representa una unidad visual.
+  model.style.width = `${Math.max(300, (1 + m) * 90)}px`;
+  model.style.height = `${Math.max(250, (1 + n) * 70)}px`;
+  model.style.gridTemplateColumns = `1fr repeat(${m}, ${Math.max(35, 100 / (m + 1))}fr)`;
+  model.style.gridTemplateRows = `1fr repeat(${n}, ${Math.max(30, 100 / (n + 1))}fr)`;
+
+  // Ficha a²: ocupa la esquina superior izquierda.
+  const a2 = document.createElement("div");
+  a2.className = "tile a2";
+  a2.textContent = "a²";
+  a2.style.gridColumn = "1";
+  a2.style.gridRow = "1";
+  model.appendChild(a2);
+
+  // m fichas a verticales en la parte superior derecha.
+  for (let i = 0; i < m; i++) {
+    const tile = document.createElement("div");
+    tile.className = "tile aTile";
+    tile.textContent = "a";
+    tile.style.gridColumn = String(i + 2);
+    tile.style.gridRow = "1";
+    model.appendChild(tile);
+  }
+
+  // n fichas a horizontales debajo de a².
+  for (let j = 0; j < n; j++) {
+    const tile = document.createElement("div");
+    tile.className = "tile aTile";
+    tile.textContent = "a";
+    tile.style.gridColumn = "1";
+    tile.style.gridRow = String(j + 2);
+    model.appendChild(tile);
+  }
+
+  // m*n fichas de área 1.
+  for (let row = 0; row < n; row++) {
+    for (let col = 0; col < m; col++) {
+      const tile = document.createElement("div");
+      tile.className = "tile one";
+      tile.textContent = "1";
+      tile.style.gridColumn = String(col + 2);
+      tile.style.gridRow = String(row + 2);
+      model.appendChild(tile);
+    }
+  }
+}
+
+document.getElementById("p").addEventListener("keydown", e => {
+  if (e.key === "Enter") simular();
+});
+document.getElementById("q").addEventListener("keydown", e => {
+  if (e.key === "Enter") simular();
+});
+
+simular();
+</script>
+</body>
+</html>
